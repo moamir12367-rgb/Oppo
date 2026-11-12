@@ -25,15 +25,24 @@ jobs:
 
       - name: Debug APK banao
         run: |
-          F=$(find . -name settings.gradle -not -path './.git/*' | head -n 1)
-          if [ -z "$F" ]; then echo "ERROR: settings.gradle repo mein nahi mili, files upload karo"; ls -R | head -50; exit 1; fi
-          DIR=$(dirname "$F")
-          echo "Project folder: $DIR"
-          cd "$DIR"
+          Z=$(find . -maxdepth 2 -iname '*.zip' -not -path './.git/*' | head -n 1)
+          if [ -n "$Z" ]; then
+            echo "Zip mili: $Z"
+            mkdir -p /tmp/proj
+            unzip -o -q "$Z" -d /tmp/proj
+            DIR=/tmp/proj
+          else
+            DIR=.
+          fi
+          F=$(find "$DIR" -name settings.gradle -not -path '*/.git/*' | head -n 1)
+          if [ -z "$F" ]; then echo "ERROR: settings.gradle nahi mili"; ls -R "$DIR" | head -50; exit 1; fi
+          cd "$(dirname "$F")"
+          echo "Project folder: $(pwd)"
           gradle assembleDebug --no-daemon
+          mkdir -p /tmp/out && cp app/build/outputs/apk/debug/*.apk /tmp/out/
 
       - name: APK upload karo
         uses: actions/upload-artifact@v4
         with:
           name: MilkmanEntry-APK
-          path: "**/build/outputs/apk/debug/*.apk"
+          path: /tmp/out/*.apk
