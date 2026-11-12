@@ -24,10 +24,16 @@ jobs:
           gradle-version: 8.7
 
       - name: Debug APK banao
-        run: gradle assembleDebug --no-daemon
+        run: |
+          F=$(find . -name settings.gradle -not -path './.git/*' | head -n 1)
+          if [ -z "$F" ]; then echo "ERROR: settings.gradle repo mein nahi mili, files upload karo"; ls -R | head -50; exit 1; fi
+          DIR=$(dirname "$F")
+          echo "Project folder: $DIR"
+          cd "$DIR"
+          gradle assembleDebug --no-daemon
 
       - name: APK upload karo
         uses: actions/upload-artifact@v4
         with:
           name: MilkmanEntry-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: "**/build/outputs/apk/debug/*.apk"
